@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Jan Delgado <jdelgado[at]gmx.net>
+// Copyright (c) 2018 Jan Delgado <jdelgado[at]gmx.net>
 // https://github.com/jandelgado/jled
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,46 +19,11 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //
-#ifndef SRC_JLED_H_
-#define SRC_JLED_H_
-
-// JLed - non-blocking LED abstraction library.
-//
-// Example Arduino sketch:
-//   JLed led = JLed(LED_BUILTIN).Blink(500, 500).Repeat(10).DelayBefore(1000);
-//
-//   void setup() {}
-//
-//   void loop() {
-//     led.Update();
-//   }
-
-#include "jled_base.h"  // NOLINT
-
 #ifdef ESP32
 #include "esp32_hal.h"  // NOLINT
-namespace jled {using JLedHalType = Esp32Hal;}
-#elif ESP8266
-#include "esp8266_hal.h"  // NOLINT
-namespace jled {using JLedHalType = Esp8266Hal;}
-#else
-#include "arduino_hal.h"  // NOLINT
-namespace jled {using JLedHalType = ArduinoHal;}
+
+using jled::Esp32ChanMapper;
+using jled::Esp32Hal;
+
+Esp32ChanMapper Esp32Hal::chanMapper_ = Esp32ChanMapper();
 #endif
-
-namespace jled {
-class JLed : public TJLed<JLedHalType, JLed> {
-    using TJLed<JLedHalType, JLed>::TJLed;
-};
-
-// a group of JLed objects which can be controlled simultanously
-class JLedSequence : public TJLedSequence<JLed> {
-    using TJLedSequence<JLed>::TJLedSequence;
-};
-
-};  // namespace jled
-
-using JLed = jled::JLed;
-using JLedSequence = jled::JLedSequence;
-
-#endif  // SRC_JLED_H_

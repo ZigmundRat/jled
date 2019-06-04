@@ -8,6 +8,21 @@ compiler:
   - gcc
 python:
   - "2.7"
+matrix:
+  include:
+    # works on Precise and Trusty
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+
+before_install:
+    - eval "${MATRIX_EVAL}"
 
 cache:
   directories:
@@ -26,9 +41,10 @@ install:
 script:
   - PATH=~/.local/bin:$PATH
   - make lint
-  - cd test && make coverage
-  - cd ..
-  - cd test && coveralls-lcov --repo-token "$COVERALLS_TOKEN" coverage.info
+  - make ci
+  - cd test && make clean test OPT=-O2
+  - make clean coverage OPT=-O0
+  - coveralls-lcov --repo-token "$COVERALLS_TOKEN" coverage.info
 
 env:
   global:

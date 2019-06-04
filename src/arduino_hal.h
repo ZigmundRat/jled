@@ -19,46 +19,33 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //
-#ifndef SRC_JLED_H_
-#define SRC_JLED_H_
+#ifndef SRC_ARDUINO_HAL_H_
+#define SRC_ARDUINO_HAL_H_
 
-// JLed - non-blocking LED abstraction library.
-//
-// Example Arduino sketch:
-//   JLed led = JLed(LED_BUILTIN).Blink(500, 500).Repeat(10).DelayBefore(1000);
-//
-//   void setup() {}
-//
-//   void loop() {
-//     led.Update();
-//   }
-
-#include "jled_base.h"  // NOLINT
-
-#ifdef ESP32
-#include "esp32_hal.h"  // NOLINT
-namespace jled {using JLedHalType = Esp32Hal;}
-#elif ESP8266
-#include "esp8266_hal.h"  // NOLINT
-namespace jled {using JLedHalType = Esp8266Hal;}
-#else
-#include "arduino_hal.h"  // NOLINT
-namespace jled {using JLedHalType = ArduinoHal;}
-#endif
+#include <Arduino.h>
+#include "jled_hal.h"  // NOLINT
 
 namespace jled {
-class JLed : public TJLed<JLedHalType, JLed> {
-    using TJLed<JLedHalType, JLed>::TJLed;
+
+class ArduinoHal : JLedHal {
+ public:
+    ArduinoHal() {}
+    explicit ArduinoHal(uint8_t pin) noexcept : pin_(pin) {}
+
+    void analogWrite(uint8_t val) const {
+        // some platforms, e.g. STM need lazy initialization
+        if (!setup_) {
+            ::pinMode(pin_, OUTPUT);
+            setup_ = true;
+        }
+        ::analogWrite(pin_, val);
+    }
+
+    uint32_t millis() const { return ::millis(); }
+
+ private:
+    mutable bool setup_ = false;
+    uint8_t pin_;
 };
-
-// a group of JLed objects which can be controlled simultanously
-class JLedSequence : public TJLedSequence<JLed> {
-    using TJLedSequence<JLed>::TJLedSequence;
-};
-
-};  // namespace jled
-
-using JLed = jled::JLed;
-using JLedSequence = jled::JLedSequence;
-
-#endif  // SRC_JLED_H_
+}  // namespace jled
+#endif  // SRC_ARDUINO_HAL_H_

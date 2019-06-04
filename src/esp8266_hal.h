@@ -19,46 +19,34 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //
-#ifndef SRC_JLED_H_
-#define SRC_JLED_H_
+#ifndef SRC_ESP8266_HAL_H_
+#define SRC_ESP8266_HAL_H_
 
-// JLed - non-blocking LED abstraction library.
-//
-// Example Arduino sketch:
-//   JLed led = JLed(LED_BUILTIN).Blink(500, 500).Repeat(10).DelayBefore(1000);
-//
-//   void setup() {}
-//
-//   void loop() {
-//     led.Update();
-//   }
-
-#include "jled_base.h"  // NOLINT
-
-#ifdef ESP32
-#include "esp32_hal.h"  // NOLINT
-namespace jled {using JLedHalType = Esp32Hal;}
-#elif ESP8266
-#include "esp8266_hal.h"  // NOLINT
-namespace jled {using JLedHalType = Esp8266Hal;}
-#else
-#include "arduino_hal.h"  // NOLINT
-namespace jled {using JLedHalType = ArduinoHal;}
-#endif
+#include <Arduino.h>
 
 namespace jled {
-class JLed : public TJLed<JLedHalType, JLed> {
-    using TJLed<JLedHalType, JLed>::TJLed;
+class Esp8266Hal /*: public AnalogWriter */ {
+ public:
+    Esp8266Hal() {}
+
+    explicit Esp8266Hal(uint8_t pin) noexcept : pin_(pin) {
+        ::pinMode(pin_, OUTPUT);
+    }
+    void analogWrite(uint8_t val) const {
+        // ESP8266 uses 10bit PWM range per default, scale value up
+        ::analogWrite(pin_, Esp8266Hal::ScaleTo10Bit(val));
+    }
+    uint32_t millis() const {return ::millis();}
+
+ protected:
+    // scale an 8bit value to 10bit: 0 -> 0, ..., 255 -> 1023,
+    // preserving min/max relationships in both ranges.
+    static uint16_t ScaleTo10Bit(uint8_t x) {
+        return (x == 0) ? 0 : (x << 2) + 3;
+    }
+
+ private:
+    uint8_t pin_;
 };
-
-// a group of JLed objects which can be controlled simultanously
-class JLedSequence : public TJLedSequence<JLed> {
-    using TJLedSequence<JLed>::TJLedSequence;
-};
-
-};  // namespace jled
-
-using JLed = jled::JLed;
-using JLedSequence = jled::JLedSequence;
-
-#endif  // SRC_JLED_H_
+}  // namespace jled
+#endif  // SRC_ESP8266_HAL_H_
