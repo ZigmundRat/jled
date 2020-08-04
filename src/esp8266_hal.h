@@ -25,18 +25,19 @@
 #include <Arduino.h>
 
 namespace jled {
-class Esp8266Hal /*: public AnalogWriter */ {
- public:
-    Esp8266Hal() {}
 
-    explicit Esp8266Hal(uint8_t pin) noexcept : pin_(pin) {
+class Esp8266Hal {
+ public:
+    using PinType = uint8_t;
+
+    explicit Esp8266Hal(PinType pin) noexcept : pin_(pin) {
         ::pinMode(pin_, OUTPUT);
     }
     void analogWrite(uint8_t val) const {
         // ESP8266 uses 10bit PWM range per default, scale value up
         ::analogWrite(pin_, Esp8266Hal::ScaleTo10Bit(val));
     }
-    uint32_t millis() const {return ::millis();}
+    uint32_t millis() const { return ::millis(); }
 
  protected:
     // scale an 8bit value to 10bit: 0 -> 0, ..., 255 -> 1023,
@@ -46,7 +47,7 @@ class Esp8266Hal /*: public AnalogWriter */ {
     }
 
  private:
-    uint8_t pin_;
+    PinType pin_;
 };
 }  // namespace jled
 #endif  // SRC_ESP8266_HAL_H_

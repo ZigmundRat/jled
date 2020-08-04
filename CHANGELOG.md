@@ -1,13 +1,39 @@
 # JLed changelog
 
+## [2020-02-23] 4.5.0
+
+* new: `JLed::MaxBrightness(uint8_t level)` method to limit output of effects
+  (implements #43).
+
+## [2020-02-21] 4.4.0
+
+* JLed now supports the mbed framework. See README.md and `examples/multiled_mbed`
+  for examples.
+
+## [2019-09-21] 4.3.0
+
+* new example: [custom HAL](examples/custom_hal/custom_hal.ino) showing
+  how to implment a custom HAL.
+
+## [2019-08-30] 4.2.1
+
+* fix: make sure memory alignment is correct (caused hard fault on 
+  SAMD21). Fixes #27.
+
+## [2019-06-20] 4.2.0
+
+* changing an effect resets the Jled object so it starts over with the 
+  new effect (see #25). Prior to this change, calling `Reset()` was
+  necessary.
+
 ## [2019-05-11] 4.1.2
 
 * fix: ESP32 dynamic channel assignment fixed. Sequence demo now working
-       as expected.
+       as expected (see #22).
 
 ## [2019-05-07] 4.1.1
 
-* fix: version format in library.properties (removed leading `v`)
+* fix: version format in library.properties (removed leading `v`; see #21)
 
 ## [2019-03-10] v4.1.0
 

@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/jandelgado/jled.svg?branch=master)](https://travis-ci.org/jandelgado/jled)
 [![Coverage Status](https://coveralls.io/repos/github/jandelgado/jled/badge.svg?branch=master&dummy=1)](https://coveralls.io/github/jandelgado/jled?branch=master)
 
-An Arduino library to control LEDs. It uses a **non-blocking** approach and can
+A library to control LEDs. It uses a **non-blocking** approach and can
 control LEDs in simple (**on**/**off**) and complex (**blinking**,
 **breathing** and more) ways in a **time-driven** manner.
 
@@ -15,7 +15,7 @@ and someone did a [video tutorial for JLed](https://youtu.be/x5V2vdpZq1w)  - Tha
 ## Example
 
 ```c++
-// breathe an LED (on gpio 9) for 12 seconds, waiting for 500s after each run
+// breathe LED (on gpio 9) 6 times for 1500ms, waiting for 500ms after each run
 #include <jled.h>
 
 auto led_breathe = JLed(9).Breathe(1500).Repeat(6).DelayAfter(500);
@@ -62,11 +62,14 @@ void loop() {
             * [Immediate Stop](#immediate-stop)
         * [Misc functions](#misc-functions)
             * [Low active for inverted output](#low-active-for-inverted-output)
+            * [Maximum brightness level](#maximum-brightness-level)
     * [Controlling a group of LEDs](#controlling-a-group-of-leds)
+* [Framework notes](#framework-notes)
 * [Platform notes](#platform-notes)
     * [ESP8266](#esp8266)
     * [ESP32](#esp32)
     * [STM32](#stm32)
+        * [Arduino framework](#arduino-framework)
 * [Example sketches](#example-sketches)
     * [PlatformIO](#platformio-1)
     * [Arduino IDE](#arduino-ide-1)
@@ -75,7 +78,7 @@ void loop() {
 * [Unit tests](#unit-tests)
 * [Contributing](#contributing)
 * [FAQ](#faq)
-    * [How do I check if an JLed object is still being updated?](#how-do-i-check-if-an-jled-object-is-still-being-updated)
+    * [How do I check if a JLed object is still being updated?](#how-do-i-check-if-a-jled-object-is-still-being-updated)
     * [How do I restart an effect?](#how-do-i-restart-an-effect)
     * [How do I change a running effect?](#how-do-i-change-a-running-effect)
 * [Author and Copyright](#author-and-copyright)
@@ -91,12 +94,12 @@ void loop() {
 * easy configuration using fluent interface
 * can control groups of LEDs sequentially or in parallel
 * Arduino, ESP8266 and ESP32 platform compatible
-* portable
+* supports Arduino and [mbed](www.mbed.com) frameworks
 * well [tested](https://coveralls.io/github/jandelgado/jled)
 
 ## Cheat Sheet
 
-![JLed Cheat Sheet](doc/cheat_sheet.png)
+![JLed Cheat Sheet](doc/cheat_sheet.jpg)
 
 ## Installation
 
@@ -122,15 +125,15 @@ lib_deps=jled
 
 ## Usage
 
-First the LED object is constructed and configured, then the state is updated
+First, the LED object is constructed and configured, then the state is updated
 with subsequent calls to the `Update()` method, typically from the `loop()`
 function. While the effect is active, `Update` returns `true`, otherwise
 `false`.
 
 The constructor takes the pin, to which the LED is connected to as
-only argument. Further configuration of the LED object is done using a fluent
+the only argument. Further configuration of the LED object is done using a fluent
 interface, e.g. `JLed led = JLed(13).Breathe(2000).DelayAfter(1000).Repeat(5)`.
-See examples section below for further details.
+See the examples section below for further details.
 
 ### Effects
 
@@ -164,7 +167,7 @@ void loop() {
 #### Blinking
 
 In blinking mode, the LED cycles through a given number of on-off cycles, on-
-and off-cycle duration are specified independently. The `Blink()` method takes
+and off-cycle durations are specified independently. The `Blink()` method takes
 the duration for the on- and off cycle as arguments.
 
 ##### Blinking example
@@ -184,8 +187,8 @@ void loop() {
 
 #### Breathing
 
-In breathing mode, the LED smoothly changes brightness using PWM. The
-`Breathe()` method takes the period of the effect as argument.
+In breathing mode, the LED smoothly changes the brightness using PWM. The
+`Breathe()` method takes the period of the effect as an argument.
 
 ##### Breathing example
 
@@ -205,15 +208,15 @@ void loop() {
 
 #### Candle
 
-In candle mode the random flickering of a candle or fire is simulated. 
+In candle mode, the random flickering of a candle or fire is simulated. 
 The builder method has the following signature:
   `Candle(uint8_t speed, uint8_t jitter, uin16_t period)`
 
 * `speed` - controls the speed of the effect. 0 for fastest, increasing speed 
-  divides into halve per increment. Default value is 7.
-* `jitter` - amount of jittering. 0 none (constant on), 255 maximum. Default
+  divides into halve per increment. The default value is 7.
+* `jitter` - the amount of jittering. 0 none (constant on), 255 maximum. Default
   value is 15.
-* `period` - Period of effect in ms.  Default is 65535 ms.
+* `period` - Period of effect in ms.  The default value is 65535 ms.
 
 The default settings simulate a candle. For a fire effect for example use
 call the method with `Candle(5 /*speed*/, 100 /* jitter*/)`. 
@@ -236,7 +239,7 @@ void loop() {
 #### FadeOn
 
 In FadeOn mode, the LED is smoothly faded on to 100% brightness using PWM. The
-`FadeOn()` method takes the period of the effect as argument.
+`FadeOn()` method takes the period of the effect as an argument.
 
 The brightness function uses an approximation of this function (example with
 period 1000):
@@ -272,7 +275,7 @@ It is also possible to provide a user defined brightness evaluator. The class
 must be derived from the `jled::BrightnessEvaluator` class and implement
 two methods:
 
-* `uint8_t Èval(uint32_t t) const` - the brightness evaluation function that
+* `uint8_t Eval(uint32_t t) const` - the brightness evaluation function that
   calculates a brightness for the given time `t`. The brightness must be returned
   as an unsigned byte, where 0 means LED off and 255 means full brightness.
 * `uint16_t Period() const` - period of the effect.
@@ -333,7 +336,7 @@ Call `Update()` periodically to update the state of the LED. `Update` returns
 
 ##### Reset
 
-A call to `Reset()` brings the JLed object to it's initial state. Use it when
+A call to `Reset()` brings the JLed object to its initial state. Use it when
 you want to start-over an effect.
 
 ##### Immediate Stop
@@ -349,9 +352,24 @@ Further calls to `Update()` will have no effect unless the Led is reset (using
 Use the `LowActive()` method when the connected LED is low active. All output
 will be inverted by JLed (i.e. instead of x, the value of 255-x will be set).
 
+##### Maximum brightness level
+
+The `MaxBrightness(uint8_t level)` method is used to set the maximum brightness 
+level of the LED. A level of 255 (the default) is full brightness, while 0 
+effectively turns the LED off.
+
+The `uint_8 MaxBrightness() const` method returns the current maximum 
+brightness level. Since currently only the upper 5 bits of the provided 
+brighness value are used, the lower 3 bits returned are always 0.
+
+If you want to programmatically increment or decrement the maximum brightness
+level, use the `JLed::kBrightnessStep` constant (which is defined as `1 <<
+(8-JLed::kBitsBrightness)` as the increment (instead of the hard wired value
+`8`) to be independent of the current JLed implementation using 5 bits.
+
 ### Controlling a group of LEDs
 
-The `JLedSequence` class allows to control a group of `JLed` objects
+The `JLedSequence` class allows controlling a group of `JLed` objects
 simultaneously, either in parallel or sequentially, starting the next `JLed`
 effect when the previous finished. The constructor takes the mode (`PARALLEL`,
 `SEQUENCE`), an array of `JLed` objects and the size of the array, e.g.
@@ -386,16 +404,44 @@ The `JLedSequence` provides the following methods:
 * `Reset()` - Resets all `JLed` objects controlled by the sequence and 
    the sequence, resulting in a start-over.
 
+## Framework notes
+
+JLed supports the Arduino and [mbed](https://www.mbed.org) frameworks. When
+using platformio, the framework to be used is configured in the `platform.ini`
+file, as shown in the following example, which for example selects the `mbed`
+framework:
+
+```ini
+[env:nucleo_f401re_mbed]
+platform=ststm32
+board = nucleo_f401re
+framework = mbed
+build_flags = -Isrc 
+src_filter = +<../../src/>  +<./>
+upload_protocol=stlink
+```
+
+An [mbed example is provided here](examples/multiled_mbed/multiled_mbed.cpp).
+To compile it for the F401RE, make your [plaform.ini](platform.ini) look like:
+
+```ini
+...
+[platformio]
+default_envs = nucleo_f401re_mbed
+src_dir = examples/multiled_mbed
+...
+```
+
 ## Platform notes
 
 ### ESP8266
 
 The DAC of the ESP8266 operates with 10 bits, every value JLed writes out gets
 automatically scaled to 10 bits, since JLed internally only uses 8 bits.  The
-scaling methods makes sure that min/max relationships are preserved, i.e. 0 is
-mapped to 0 and 255 is mapped to 1023. When using a user defined brightness
-function on the ESP8266, 8 bit values must be returned, all scaling is done by
-JLed transparently for the application, yielding platform independent code.
+scaling methods make sure that min/max relationships are preserved, i.e. 0 is
+mapped to 0 and 255 is mapped to 1023. When using a user-defined brightness
+function on the ESP8266, 8-bit values must be returned, all scaling is done by
+JLed transparently for the application, yielding platform-independent code.
 
 ### ESP32
 
@@ -403,49 +449,48 @@ The ESP32 Arduino SDK does not provide an `analogWrite()` function. To
 be able to use PWM, we use the `ledc` functions of the ESP32 SDK.
 (See [esspressif documentation](https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/ledc.html) for details).
 
-The `ledc` API connects so called channels to GPIO pins, enabling them to use
+The `ledc` API connects so-called channels to GPIO pins, enabling them to use
 PWM. There are 16 channels available. Unless otherwise specified, JLed
 automatically picks the next free channel, starting with channel 0 and wrapping
 over after channel 15. To manually specify a channel, the JLed object must be
 constructed this way:
 
-```
+```c++
 auto esp32Led = JLed(Esp32Hal(2, 7)).Blink(1000, 1000).Forever();
 ```
 
 The `Esp32Hal(pin, chan)` constructor takes the pin number as the first
-argument and the ESP32 ledc channel number on second position. Note that using
-the above mentioned constructor yields non-platform independent code, so it 
-should be avoided and is normally not necessary.
+argument and the ESP32 ledc channel number on the second position. Note that
+using the above-mentioned constructor yields non-platform independent code, so
+it should be avoided and is normally not necessary.
 
 ### STM32
+
+#### Arduino framework
 
 I had success running JLed on a [STM32 Nucleo64 F401RE
 board](https://www.st.com/en/evaluation-tools/nucleo-f401re.html) using this
 [STM32 Arduino
 core](https://github.com/rogerclarkmelbourne/Arduino_STM32/tree/master/STM32F4)
-and compiling from the Arduino IDE. Note that the `stlink` tool may be
-necessary to upload sketches to the micro controller.
-
-PlatformIO does not support the Arduino platform for the F401RE in the [current
-version](https://docs.platformio.org/en/latest/boards/ststm32/nucleo_f401re.html),
-but has support on the [master
-branch](https://github.com/platformio/platform-ststm32.git). See
-[plaform.ini](platform.ini) for an example on how to use the Arduino framework
-with this board.
+and compiling examples from the Arduino IDE. Note that the `stlink` is
+necessary to upload sketches to the microcontroller.
 
 ## Example sketches
 
-Examples sketches are provided in the [examples](examples/) directory.
+Example sketches are provided in the [examples](examples/) directory.
 
 * [Hello, world](examples/hello)
 * [Turn LED on after a delay](examples/simple_on)
+* [Breathe effect](examples/breathe)
+* [Candle effect](examples/candle)
 * [Fade LED on](examples/fade_on)
 * [Fade LED off](examples/fade_off)
 * [Controlling multiple LEDs in parallel](examples/multiled)
+* [Controlling multiple LEDs in parallel (mbed)](examples/multiled_mbed)
 * [Controlling multiple LEDs sequentially](examples/sequence)
 * [Simple User provided effect](examples/user_func)
 * [Morsecode example](examples/morse)
+* [Custom HAL example](examples/custom_hal)
 
 ### PlatformIO
 
@@ -454,12 +499,10 @@ uncomment the example to be built in the [platformio.ini](platformio.ini)
 project file, e.g.:
 
 ```ini
-...
 [platformio]
 ; uncomment example to build
 src_dir = examples/hello
 ;src_dir = examples/breathe
-...
 ```
 
 ### Arduino IDE
@@ -471,16 +514,17 @@ the `File` > `Examples` > `JLed` menu.
 
 ### Support new hardware
 
-JLed uses a very thin hardware abstraction layer (hal) to abstract access to the
-acutal used MCU (e.g. ESP32, ESP8266). The hal objects encapsulate access to
-the GPIO and time functionality of the MCU under the framework being used.
-During unit test, mocked hal instances are used, enabling tests to check the
-generated output. 
+JLed uses a very thin hardware abstraction layer (hal) to abstract access to
+the actual MCU/framework used (e.g. ESP32, ESP8266). The hal object encapsulate
+access to the GPIO and time functionality of the MCU under the framework being
+used.  During the unit test, mocked hal instances are used, enabling tests to
+check the generated output.  The [Custom HAL project](examples/custom_hal)
+provides an example for a user define HAL.
 
 ## Unit tests
 
-JLed comes with an exhaustive host based unit test suite. Info on how to run
-the host based provided unit tests [is provided here](test/README.md).
+JLed comes with an exhaustive host-based unit test suite. Info on how to run
+the host-based provided unit tests [is provided here](test/README.md).
 
 ## Contributing
 
@@ -497,7 +541,7 @@ the host based provided unit tests [is provided here](test/README.md).
 
 ## FAQ
 
-### How do I check if an JLed object is still being updated?
+### How do I check if a JLed object is still being updated?
 
 * Check the return value of the `JLed::Update` method: the method returns `true` if
   the effect is still running, otherwise `false`.
@@ -510,7 +554,7 @@ Call `Reset()` on a `JLed` object to start over.
 ### How do I change a running effect?
 
 Just 'reconfigure' the `JLed` with any of the effect methods (e.g. `FadeOn`,
-`Breathe`, `Blink` etc). Time wise, the effect will start over.
+`Breathe`, `Blink` etc). Time-wise, the effect will start over.
 
 ## Author and Copyright
 
