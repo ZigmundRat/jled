@@ -1,4 +1,22 @@
-# JLed changelog
+# JLed changelog (github.com/jandelgado/jled)
+
+## [2021-02-02] 4.6.1
+
+* fix: `Forever()` on sequence had no effect (#68)
+
+## [2021-01-24] 4.6.0
+
+* new: JLedSequence can be configured to play the sequence multiple times
+       using the `Repeat()` and `Forever()` methods
+* drop travis-ci, use github actions
+
+## [2020-10-24] 4.5.2
+
+* fix: ESP32 led glimming when using low-active connection (#60)
+
+## [2020-07-01] 4.5.1
+
+* fix: support for Nano 33 BLE (#53)
 
 ## [2020-02-23] 4.5.0
 

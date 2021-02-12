@@ -1,6 +1,6 @@
 # JLed - Advanced LED Library
 
-[![Build Status](https://travis-ci.org/jandelgado/jled.svg?branch=master)](https://travis-ci.org/jandelgado/jled)
+![run tests](https://github.com/jandelgado/jled/workflows/run%20tests/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/jandelgado/jled/badge.svg?branch=master&dummy=1)](https://coveralls.io/github/jandelgado/jled?branch=master)
 
 An embedded C++ library to control LEDs. It uses a **non-blocking** approach and can
@@ -324,7 +324,7 @@ an effect. The default value is 0 ms.
 
 ##### Repetitions
 
-Use the `Repeat()` method to specify the number of repetition. The default
+Use the `Repeat()` method to specify the number of repetitions. The default
 value is 1 repetition. The `Forever()` methods sets to repeat the effect
 forever. Each repetition includes a full period of the effect and the time
 specified by `DelayAfter()` method.
@@ -382,11 +382,11 @@ effect when the previous finished. The constructor takes the mode (`PARALLEL`,
 
 ```c++
 JLed leds[] = {
-    JLed(4).Blink(750, 250).Forever(),
-    JLed(3).Breathe(2000).Forever()
+    JLed(4).Blink(750, 250).Repeat(10),
+    JLed(3).Breathe(2000).Repeat(5);
 };
 
-JLedSequence sequence(JLedSequence::eMode::PARALLEL, leds);
+auto sequence = JLedSequence(JLedSequence::eMode::PARALLEL, leds).Repeat(2);
 
 void setup() {
 }
@@ -405,6 +405,9 @@ The `JLedSequence` provides the following methods:
 * `Update()` - updates the active `JLed` objects controlled by the sequence.
   Like the `JLed::Update()` method, it returns `true` if an effect is running,
   else `false`.
+* Use the `Repeat(n)` method to specify the number of repetitions. The default
+  value is 1 repetition. The `Forever()` methods sets to repeat the sequence
+  forever. 
 * `Stop()` - turns off all `JLed` objects controlled by the sequence and 
    stops the sequence. Further calls to `Update()` will have no effect.
 * `Reset()` - Resets all `JLed` objects controlled by the sequence and 
@@ -462,10 +465,10 @@ over after channel 15. To manually specify a channel, the JLed object must be
 constructed this way:
 
 ```c++
-auto esp32Led = JLed(Esp32Hal(2, 7)).Blink(1000, 1000).Forever();
+auto esp32Led = JLed(jled::Esp32Hal(2, 7)).Blink(1000, 1000).Forever();
 ```
 
-The `Esp32Hal(pin, chan)` constructor takes the pin number as the first
+The `jled::Esp32Hal(pin, chan)` constructor takes the pin number as the first
 argument and the ESP32 ledc channel number on the second position. Note that
 using the above-mentioned constructor yields non-platform independent code, so
 it should be avoided and is normally not necessary.
